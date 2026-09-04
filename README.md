@@ -55,26 +55,24 @@ Security Information and Event Management (SIEM)
 ```text
 siem-log-ingestion-alert-pipeline/
 ├── README.md
+├── generator.py
+├── database/
+│   ├── schema.json
+│   ├── schema_setup.py
+│   └── siem_logs.db
+├── alerts/
+├── config/
+├── dashboard/
 ├── docs/
-│   ├── setup-guide.md
-│   ├── architecture.md
-│   ├── testing-notes.md
-│   └── findings.md
-├── scripts/
-│   ├── collection/
-│   ├── ingestion/
-│   ├── detection/
-│   └── utilities/
-├── configs/
-│   ├── agents/
-│   ├── siem/
-│   └── detection-rules/
-├── samples/
-│   └── sanitized-logs/
+├── ingestion/
+├── parsers/
+├── pipeline/
+├── storage/
+├── tests/
 └── .gitignore
 ```
 
-> This structure is planned and will be updated as the project develops.
+> Most module folders (`alerts/`, `config/`, `dashboard/`, `ingestion/`, `parsers/`, `pipeline/`, `storage/`, `tests/`) are currently placeholders and will be filled in as the project develops.
 
 ## Current Status
 
@@ -87,12 +85,14 @@ siem-log-ingestion-alert-pipeline/
 - Configured Kali Linux and Windows 11 virtual machines in Oracle VM VirtualBox.
 - Established private virtual-machine networking for controlled lab communication.
 - Identified the need for version control for scripts, configurations, and documentation.
+- Defined the standardized log event schema (`database/schema.json`) and SQLite database setup (`database/schema_setup.py`), including log entry validation.
+- Built a synthetic log generator (`generator.py`) that produces normal traffic and a simulated brute-force attack pattern for testing.
 
 ### In Progress
 
 - Selecting and configuring the Security Information and Event Management (SIEM) platform.
 - Choosing log sources and log collection methods.
-- Building initial ingestion and detection workflows.
+- Building initial ingestion and detection workflows (`ingestion/`, `parsers/`, `pipeline/`).
 - Defining test scenarios and expected alert outcomes.
 
 ### Planned
@@ -100,7 +100,9 @@ siem-log-ingestion-alert-pipeline/
 - Collect Windows event logs.
 - Collect relevant Kali Linux system and authentication logs.
 - Configure log forwarding into the Security Information and Event Management (SIEM) platform.
-- Develop initial detection rules.
+- Develop initial detection rules and alerting logic (`alerts/`).
+- Build out a dashboard for reviewing logs and alerts (`dashboard/`).
+- Add automated test coverage (`tests/`).
 - Test alert generation with safe, authorized lab activity.
 - Document results, limitations, and next steps.
 
