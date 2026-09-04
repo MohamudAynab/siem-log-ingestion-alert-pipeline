@@ -30,3 +30,25 @@ config/local.*
 # Operating-system files
 .DS_Store
 Thumbs.db
+
+
+# Environment Variables & Secrets
+.env
+.env.local
+config/local.*
+
+# Database Files (SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
