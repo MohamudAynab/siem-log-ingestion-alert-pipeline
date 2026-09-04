@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/siem-log-ingestion-alert-pipeline/schema/v1",
+  "$comment": "Changelog: v1. Initial shared SIEM log event schema for ingestion, storage, and detection.",
+  "title": "SIEM Log Event",
+  "description": "Normalized log event contract shared by the SIEM ingestion and detection pipeline.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "log_id": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "description": "Primary key for the log event. Implementations may generate a positive auto-incrementing integer or a UUID.",
+      "examples": [1, "550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$",
+      "description": "The event time in strict ISO 8601 date-time form, including a UTC designator or numeric timezone offset.",
+      "examples": ["2026-09-04T16:38:00Z"]
+    },
+    "source_ip": {
+      "type": "string",
+      "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
+      "description": "IPv4 address of the system that produced the event.",
+      "examples": ["192.0.2.10"]
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Application endpoint or resource associated with the event.",
+      "examples": ["/login", "/dashboard"]
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User-agent or client identifier reported by the source.",
+      "examples": ["Mozilla/5.0"]
+    },
+    "action_status": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 599,
+      "description": "HTTP response status code. Values must be integers in the standard 100-599 HTTP status range.",
+      "examples": [200, 401]
+    },
+    "raw_line": {
+      "type": "string",
+      "description": "Original unparsed log text retained for debugging and troubleshooting.",
+      "examples": ["2026-09-04T16:38:00Z 192.0.2.10 GET /login 401"]
+    },
+    "severity": {
+      "type": "string",
+      "description": "Optional detection-rule tag describing the event severity.",
+      "examples": ["medium"]
+    }
+  },
+  "required": [
+    "log_id",
+    "timestamp",
+    "source_ip",
+    "endpoint",
+    "user_agent",
+    "action_status"
+  ]
+}
