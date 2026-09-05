@@ -52,3 +52,8 @@ venv/
 env/
 .venv/
 
+# Raw log drop-off from VM shared folders (populated at runtime, not committed)
+ingestion/incoming/*
+!ingestion/incoming/*/
+!ingestion/incoming/*/.gitkeep
+
