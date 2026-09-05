@@ -57,3 +57,6 @@ ingestion/incoming/*
 !ingestion/incoming/*/
 !ingestion/incoming/*/.gitkeep
 
+# Per-machine ingestion collector state (record IDs / file offsets)
+ingestion/.state/
+
