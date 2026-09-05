@@ -159,6 +159,8 @@ siem-log-ingestion-alert-pipeline/
 
 ## Roadmap
 
+See [docs/roadmap.md](docs/roadmap.md) for the full sprint-by-sprint plan and task ownership split between contributors.
+
 - [ ] Select a Security Information and Event Management (SIEM) platform.
 - [ ] Configure Windows event-log collection.
 - [ ] Configure Kali Linux log collection.
