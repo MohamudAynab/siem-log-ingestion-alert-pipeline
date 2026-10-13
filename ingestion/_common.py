@@ -13,13 +13,15 @@ def write_jsonl_entry(output_dir: Path, source: str, raw_text: str) -> None:
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    collected_at = datetime.now(timezone.utc)
     entry = {
         "source": source,
-        "collected_at": datetime.now(timezone.utc).isoformat(),
+        "collected_at": collected_at.isoformat(),
+        "source_timezone": datetime.now().astimezone().strftime("%z"),
         "raw": raw_text,
     }
 
-    file_name = f"{source}-{datetime.now(timezone.utc):%Y%m%d}.jsonl"
+    file_name = f"{source}-{collected_at:%Y%m%d}.jsonl"
     with open(output_dir / file_name, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
 

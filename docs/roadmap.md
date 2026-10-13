@@ -2,10 +2,10 @@
 
 ## Context
 
-The project's foundation is laid: a standardized log schema (`database/schema.json`), a SQLite storage layer with validation (`database/schema_setup.py`), and a synthetic log generator (`generator.py`) that simulates normal traffic plus a brute-force attack pattern. Everything else — `ingestion/`, `parsers/`, `pipeline/`, `alerts/`, `dashboard/`, `config/`, `storage/`, `tests/`, `docs/` — is still empty scaffolding.
+The schema (`database/schema.json`), validator (`database/schema_setup.py`), and synthetic generator (`generator.py`) are in place. Windows and Kali collectors write raw JSONL records into `ingestion/incoming/`; parsers normalize those records and `pipeline/ingest.py` stores them in SQLite through `storage/`. Detection, alerts, dashboard, and a live VM integration run remain outstanding. The raw-event mapping and schema compatibility limitations are documented in [raw-event-mapping.md](raw-event-mapping.md).
 
 **Decisions:**
-- **No third-party SIEM for now.** Build the full pipeline (collection → ingestion → parsing → storage → detection → alerting → dashboard) ourselves, using the existing schema/DB as the backbone. Revisit an enterprise SIEM (Wazuh/ELK/Splunk) as a post-completion upgrade.
+- **No third-party SIEM for now.** Build the pipeline (collection → ingestion → parsing → storage → detection → alerting → dashboard) ourselves, using the existing schema/DB as the backbone. Revisit an enterprise SIEM (Wazuh/ELK/Splunk) as a post-completion upgrade.
 - **Cadence:** 2-week sprints, 5 sprints, ~10 weeks total.
 - **Split:** by module ownership, so each person can work independently on their local clone without blocking the other, with joint integration checkpoints at the end of each sprint.
 
@@ -18,33 +18,24 @@ Anyone cloning the repo should not expect `database/siem_logs.db` to be present 
 
 ---
 
-## Sprint 1 (Weeks 1–2): Real log collection + normalization
+## Sprint 1 (Weeks 1–2): Real log collection + normalization — implemented, live validation pending
 
 **Goal:** Replace synthetic data with real logs from the lab VMs, normalized into the existing schema.
 
-- **Mohamud — `ingestion/`, `config/`:**
-  - Build a Windows Event Log collector (e.g. via `pywin32` or `wevtutil`) that pulls security-relevant events (logon/logoff, failed logon, process creation) from the Windows 11 VM.
-  - Build a Kali Linux collector that tails/reads relevant logs (`/var/log/auth.log`, syslog).
-  - Both collectors write raw log lines/events to a shared intake point (a file, directory, or simple queue — pick the simplest thing that works).
-  - `config/`: source paths, polling interval, which event types to collect.
-- **Abdi — `parsers/`, `docs/setup-guide.md`:**
-  - Build parsers that convert raw Windows/Kali log formats into the schema defined in `database/schema.json`, reusing `validate_log_entry()` from `database/schema_setup.py`.
-  - Document the raw-log → parser input contract so ingestion's output format is unambiguous.
-  - Start `docs/setup-guide.md` — how to set up the VirtualBox lab, network, and run the project locally.
-- **Joint checkpoint:** Agree on the raw-line format ingestion hands to parsers *before* building both sides in parallel (a 15-minute conversation, not a deliverable).
+- **Implemented:** Windows `wevtutil` Security-event collector (4624, 4625, 4688) and Kali `/var/log/auth.log` collector write raw JSONL to source-specific shared drop-off directories. Per-machine cursor state is kept locally.
+- **Implemented:** Windows and Kali parsers validate normalized entries against the shared schema; [raw-event-mapping.md](raw-event-mapping.md) specifies the envelope, mappings, and schema limitations.
+- **Implemented:** SQLite storage and a one-pass pipeline ingest JSONL files from `ingestion/incoming/`; focused parser/storage tests are in `tests/`.
+- **Still to verify:** Run collectors and the parser/storage pipeline against representative events from the live lab VMs. `docs/setup-guide.md` has not yet been written.
+- **Joint checkpoint:** The collectors and parsers use a JSONL envelope with `source`, `collected_at`, optional `source_timezone`, and `raw`; the normalization details are recorded in `raw-event-mapping.md`.
 
 ---
 
-## Sprint 2 (Weeks 3–4): End-to-end pipeline wiring
+## Sprint 2 (Weeks 3–4): End-to-end pipeline wiring — initial path implemented
 
 **Goal:** A real log, from either VM, flows automatically into the SQLite DB.
 
-- **Mohamud — `storage/`:**
-  - Wrap `database/schema_setup.py` into a clean storage service module (`insert_log()`, `query_logs()`, etc.) that `pipeline/` and `alerts/` can call without touching SQLite directly.
-  - Make ingestion run continuously or on an interval (replacing the one-shot `generator.py` model for real collection).
-- **Abdi — `pipeline/`, start `tests/`:**
-  - Build the orchestration layer that wires ingestion → parser → storage into one runnable flow.
-  - Write the first tests: schema validation edge cases, parser correctness against sample raw logs.
+- **Implemented:** `storage/` validates and inserts normalized events; `pipeline/ingest.py` wires JSONL input through parsers into SQLite and supports replay without duplicate rows.
+- **Still planned:** Continuous ingestion, broader schema-validation edge cases, and live VM end-to-end verification.
 - **Joint checkpoint:** Run the full pipeline against real VM activity end-to-end; confirm no data loss or validation failures.
 
 ---

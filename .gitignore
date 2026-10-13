@@ -56,7 +56,7 @@ env/
 ingestion/incoming/*
 !ingestion/incoming/*/
 !ingestion/incoming/*/.gitkeep
+ingestion/incoming/**/*.jsonl
 
 # Per-machine ingestion collector state (record IDs / file offsets)
 ingestion/.state/
-

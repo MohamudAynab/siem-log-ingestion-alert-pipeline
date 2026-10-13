@@ -18,25 +18,25 @@ The project is being built in a controlled, authorized virtual lab environment f
 - Document the setup, testing process, findings, and improvements.
 - Maintain scripts and documentation through a shared GitHub workflow.
 
-## Planned Pipeline
+## Current Pipeline
 
 ```text
 Windows 11 VM / Kali Linux VM
             │
             ▼
-     Log Collection Agent
+Windows Security / auth.log collectors
             │
             ▼
-   Log Forwarding / Ingestion
+JSONL files in ingestion/incoming/
             │
             ▼
-Security Information and Event Management (SIEM)
+Source parsers and schema validation
             │
             ▼
- Parsing, Normalization, and Detection Rules
+Local SQLite logs table
             │
             ▼
-      Alerts and Investigation Notes
+Detection rules, alerts, and dashboard (planned)
 ```
 
 ## Lab Environment
@@ -47,7 +47,7 @@ Security Information and Event Management (SIEM)
 | Kali Linux virtual machine | Supports authorized lab testing, log generation, and analysis |
 | Oracle VM VirtualBox | Hosts the isolated virtual lab environment |
 | VirtualBox NAT Network | Provides private connectivity between lab virtual machines |
-| Security Information and Event Management (SIEM) platform | Centralizes logs, applies detections, and displays alerts |
+| Local SQLite prototype | Stores normalized lab events; detections and dashboard remain planned |
 | GitHub | Stores scripts, configurations, documentation, and project history |
 
 ## Repository Structure
@@ -58,13 +58,16 @@ siem-log-ingestion-alert-pipeline/
 ├── generator.py
 ├── database/
 │   ├── schema.json
-│   ├── schema_setup.py
-│   └── siem_logs.db
+│   └── schema_setup.py
 ├── alerts/
 ├── config/
 ├── dashboard/
 ├── docs/
+│   └── raw-event-mapping.md
 ├── ingestion/
+│   ├── windows_collector.py
+│   ├── kali_collector.py
+│   └── incoming/
 ├── parsers/
 ├── pipeline/
 ├── storage/
@@ -72,11 +75,13 @@ siem-log-ingestion-alert-pipeline/
 └── .gitignore
 ```
 
-> Most module folders (`alerts/`, `config/`, `dashboard/`, `ingestion/`, `parsers/`, `pipeline/`, `storage/`, `tests/`) are currently placeholders and will be filled in as the project develops.
+Raw collector files and the SQLite database are local runtime data and are
+ignored by Git. See [docs/raw-event-mapping.md](docs/raw-event-mapping.md) for
+the collector envelope, normalization rules, and known schema limitations.
 
 ## Current Status
 
-**Project phase:** Initial setup and planning
+**Project phase:** Collection and initial ingestion pipeline
 
 ### Completed
 
@@ -87,24 +92,25 @@ siem-log-ingestion-alert-pipeline/
 - Identified the need for version control for scripts, configurations, and documentation.
 - Defined the standardized log event schema (`database/schema.json`) and SQLite database setup (`database/schema_setup.py`), including log entry validation.
 - Built a synthetic log generator (`generator.py`) that produces normal traffic and a simulated brute-force attack pattern for testing.
+- Implemented a Windows Security event collector (`wevtutil`) and a Kali authentication-log collector, both writing raw JSONL records under `ingestion/incoming/`.
+- Added Windows and Kali parsers, mapping documentation, schema validation, and a local SQLite storage layer.
+- Added a one-pass pipeline (`python -m pipeline.ingest`) and focused tests for parsing and replay-safe storage.
 
 ### In Progress
 
-- Selecting and configuring the Security Information and Event Management (SIEM) platform.
-- Choosing log sources and log collection methods.
-- Building initial ingestion and detection workflows (`ingestion/`, `parsers/`, `pipeline/`).
-- Defining test scenarios and expected alert outcomes.
+- Verifying collector-to-database ingestion with sanitized sample events and the live lab VMs.
+- Expanding automated coverage and deciding how the existing event schema should evolve beyond its web-oriented field names.
 
 ### Planned
 
-- Collect Windows event logs.
-- Collect relevant Kali Linux system and authentication logs.
-- Configure log forwarding into the Security Information and Event Management (SIEM) platform.
+- Add an orchestration mode for repeated/continuous ingestion if required by the lab workflow.
 - Develop initial detection rules and alerting logic (`alerts/`).
 - Build out a dashboard for reviewing logs and alerts (`dashboard/`).
-- Add automated test coverage (`tests/`).
 - Test alert generation with safe, authorized lab activity.
 - Document results, limitations, and next steps.
+
+The project currently uses its own SQLite-backed pipeline; integrating a
+third-party SIEM is not part of the current implementation plan.
 
 ## Collaboration Workflow
 
@@ -161,10 +167,9 @@ siem-log-ingestion-alert-pipeline/
 
 See [docs/roadmap.md](docs/roadmap.md) for the full sprint-by-sprint plan and task ownership split between contributors.
 
-- [ ] Select a Security Information and Event Management (SIEM) platform.
-- [ ] Configure Windows event-log collection.
-- [ ] Configure Kali Linux log collection.
-- [ ] Build the initial log-ingestion pipeline.
+- [x] Configure Windows event-log collection.
+- [x] Configure Kali Linux log collection.
+- [x] Build the initial raw-log parsing and SQLite ingestion path.
 - [ ] Create baseline detection rules.
 - [ ] Generate and validate test alerts.
 - [ ] Document test cases and findings.
