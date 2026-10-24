@@ -7,8 +7,8 @@ import unittest
 from pathlib import Path
 
 from parsers import parse_event
-from pipeline.ingest import process_jsonl_file
-from storage import insert_log
+from pipeline.ingest import process_jsonl_file, run_pipeline
+from storage import create_alerts_table, insert_log
 from database.schema_setup import create_logs_table
 from ingestion._common import write_jsonl_entry
 
@@ -144,6 +144,38 @@ class PipelineTests(unittest.TestCase):
                 self.assertEqual(process_jsonl_file(path, connection), 0)
                 self.assertEqual(
                     connection.execute("SELECT COUNT(*) FROM logs").fetchone()[0],
+                    1,
+                )
+        finally:
+            connection.close()
+
+    def test_ingestion_pipeline_generates_alerts_for_failed_logon_burst(self) -> None:
+        connection = sqlite3.connect(":memory:")
+        try:
+            create_logs_table(connection)
+            create_alerts_table(connection)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                path = Path(temp_dir) / "kali.jsonl"
+                records = [
+                    {
+                        "source": "kali",
+                        "collected_at": COLLECTED_AT,
+                        "raw": (
+                            f"2026-10-23T12:00:0{second}+00:00 kali sshd[1234]: "
+                            "Failed password for lab-user from 192.0.2.44 port 22 ssh2"
+                        ),
+                    }
+                    for second in range(5)
+                ]
+                path.write_text(
+                    "".join(json.dumps(record) + "\n" for record in records),
+                    encoding="utf-8",
+                )
+
+                self.assertEqual(run_pipeline(connection, Path(temp_dir)), (5, 1))
+                self.assertEqual(run_pipeline(connection, Path(temp_dir)), (0, 0))
+                self.assertEqual(
+                    connection.execute("SELECT COUNT(*) FROM alerts").fetchone()[0],
                     1,
                 )
         finally:

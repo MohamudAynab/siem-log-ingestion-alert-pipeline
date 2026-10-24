@@ -22,6 +22,7 @@ secrets.json
 config/local.*
 
 # Security logs and network captures
+*.jsonl
 *.evtx
 *.pcap
 *.pcapng

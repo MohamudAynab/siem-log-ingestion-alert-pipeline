@@ -1,0 +1,9 @@
+{
+  "brute_force": {
+    "enabled": true,
+    "threshold": 5,
+    "window_seconds": 300,
+    "severity": "high",
+    "allowlist": []
+  }
+}

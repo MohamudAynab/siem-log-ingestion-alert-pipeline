@@ -7,6 +7,7 @@ import sqlite3
 from pathlib import Path
 
 from parsers import parse_event
+from alerts.detector import run_detection
 from storage import DEFAULT_DB_PATH, connect, insert_log
 
 
@@ -39,14 +40,26 @@ def process_incoming(
     return inserted
 
 
+def run_pipeline(
+    connection: sqlite3.Connection, incoming_dir: Path = DEFAULT_INCOMING_DIR
+) -> tuple[int, int]:
+    """Ingest incoming files, then run detections over stored events."""
+    inserted = process_incoming(connection, incoming_dir)
+    alerts = run_detection(connection)
+    return inserted, alerts
+
+
 def main() -> None:
     """Run one ingestion pass against the configured local directories."""
     connection = connect(DEFAULT_DB_PATH)
     try:
-        inserted = process_incoming(connection)
+        inserted, alerts = run_pipeline(connection)
     finally:
         connection.close()
-    print(f"[*] Ingestion complete: {inserted} new event(s) stored.")
+    print(
+        f"[*] Ingestion complete: {inserted} new event(s) stored; "
+        f"{alerts} new alert(s) generated."
+    )
 
 
 if __name__ == "__main__":
